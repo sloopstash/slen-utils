@@ -1,0 +1,175 @@
+# -*- coding: utf-8 -*-
+from __future__ import (absolute_import,unicode_literals)
+  
+# import community modules.
+import os
+import sys
+import json
+import requests
+from subprocess32 import call
+from termcolor import cprint
+
+# import custom modules.
+from slen.config import config
+
+# identity controller.
+class identity(object):
+
+  # initializer.
+  def __init__(self,**kwargs):
+    self.system = {}
+    self.account = {}
+    self.user = {}
+    self.system['base_home_dir'] = config['system']['base_home_dir']
+    self.account['full_domain'] = config['account']['full_domain']
+    self.account['scheme'] = config['account']['scheme']
+    self.user['api_key_identifier'] = config['user']['api_key_identifier']
+    self.user['api_key_token'] = config['user']['api_key_token']
+
+  # setup base home directory.
+  def setup_base_home_dir(self):
+    try:
+      call(['mkdir','-p',self.system['base_home_dir']])
+    except Exception as Error:
+      cprint('Error setting-up system base home directory.','red')
+      sys.exit(1)
+
+  # get identity.
+  def get(self,params):
+    params = json.loads(params)
+    request = requests.get(
+      self.account['scheme']+'://'+self.account['full_domain']+'/API/Stack/'+str(params['stack_id'])+'/Identity/'+str(params['identity_id']),
+      headers={'Authorization':'SLEN '+self.user['api_key_identifier']+':'+self.user['api_key_token']}
+    )
+    response = request.json()
+    return {'request':request,'response':response}
+
+  # sync identity.
+  def sync(self,params):
+    data = self.get(params)
+    if data['request'].status_code==200 and data['response']['status']=='success' and data['response'].has_key('result'):
+      identity_data = data['response']['result']['identity']
+      if self.exists(identity_data) is True:
+        cprint('The identity already exists.','yellow')
+        identity_data['home_dir'] = self.system['base_home_dir']+'/'+identity_data['name']
+        self.update_keys(identity_data)
+        sys.exit(1)
+      if self.is_active(identity_data) is False:
+        cprint('The identity is blocked.','yellow')
+        self.remove(identity_data)
+        sys.exit(1)
+      self.setup_base_home_dir()
+      identity_data['home_dir'] = self.system['base_home_dir']+'/'+identity_data['name']
+      self.create(identity_data)
+      self.configure(identity_data)
+      self.update_keys(identity_data)
+    else:
+      cprint('Error syncing identity.','red')
+      sys.exit(1)
+
+  # delete identity.
+  def delete(self,params):
+    data = self.get(params)
+    if data['request'].status_code==200 and data['response']['status']=='success' and data['response'].has_key('result'):
+      identity_data = data['response']['result']['identity']
+      if self.exists(identity_data) is False:
+        cprint('The identity does not exists.','yellow')
+        sys.exit(1)
+      self.remove(identity_data)
+    else:
+      cprint('Error deleting identity.','red')
+      sys.exit(1)
+
+  # check identity exists.
+  def exists(self,data):
+    id = call(['id',data['name']])
+    if id==0:
+      return True
+    else:
+      return False
+
+  # check identity is active.
+  def is_active(self,data):
+    if data['status']==1:
+      return True
+    else:
+      return False
+
+  # create identity.
+  def create(self,data):
+    try:
+      add_user = call(['useradd','-m','-s','/bin/bash','-d',data['home_dir'],data['name']])
+      if add_user!=0:
+        raise
+      call(['chmod','-R','o-rwx',data['home_dir']])
+      cprint('A new identity is created.','green')
+    except Exception as Error:
+      self.remove(data)
+      cprint('Error creating identity.','red')
+      sys.exit(1)
+
+  # configure identity.
+  def configure(self,data):
+    try:
+      def keys(data):
+        call(['touch',data['home_dir']+'/.ssh/authorized_keys'])
+        call(['chmod','600',data['home_dir']+'/.ssh/authorized_keys'])
+        call(['touch',data['home_dir']+'/.ssh/id_rsa'])
+        call(['chmod','400',data['home_dir']+'/.ssh/id_rsa'])
+
+      def permission(data):
+        call(['chmod','-R','700',data['home_dir']+'/.ssh'])
+
+      def ownership(data):
+        call(['chown','-R',data['name']+':'+data['name'],data['home_dir']+'/.ssh'])
+
+      def settings(data):
+        call(['touch',data['home_dir']+'/.ssh/config'])
+        config_path = data['home_dir']+'/.ssh/config'
+        if os.path.isfile(config_path):
+          config_file = open(config_path,'wt')
+          config_file.write('Host *\n\tStrictHostKeyChecking no\n')
+          config_file.close()
+
+      ssh_dir = call(['mkdir',data['home_dir']+'/.ssh'])
+      if ssh_dir!=0:
+        raise
+      permission(data)
+      keys(data)
+      settings(data)
+      ownership(data)
+    except Exception as Error:
+      self.remove(data)
+      cprint('Error configuring identity.','red')
+      sys.exit(1)
+
+  # update keys for identity.
+  def update_keys(self,data):
+    try:
+      authorized_keys = data['home_dir']+'/.ssh/authorized_keys'
+      if os.path.isfile(authorized_keys):
+        public_key = open(authorized_keys,'wt')
+        public_key.write(data['public_key'])
+        public_key.close()
+      id_rsa = data['home_dir']+'/.ssh/id_rsa'
+      if os.path.isfile(id_rsa):
+        private_key = open(id_rsa,'wt')
+        private_key.write(data['private_key'])
+        private_key.close()
+      cprint('The identity keys are updated.','green')
+    except Exception as Error:
+      self.remove(data)
+      cprint('Error updating identity keys.','red')
+      sys.exit(1)
+
+  # remove identity.
+  def remove(self,data):
+    try:
+      delete_user = call(['userdel','-r',data['name']])
+      if delete_user!=0:
+        raise
+    except Exception as Error:
+      cprint('Error deleting identity.','red')
+      sys.exit(1)
+    else:
+      cprint('Deleted identity.','green')

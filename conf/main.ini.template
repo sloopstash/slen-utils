@@ -1,0 +1,10 @@
+[system]
+base_home_dir = {{vars['system']['base_home_dir']}}
+
+[account]
+full_domain = {{vars['account']['full_domain']}}
+scheme = {{vars['account']['scheme']}}
+
+[user]
+api_key_identifier = {{vars['user']['api_key_identifier']}}
+api_key_token = {{vars['user']['api_key_token']}}
