@@ -11,16 +11,12 @@ Ubuntu/Debain
 
 ::
 
-    $ sudo apt-get update
-
     $ sudo apt-get install -y python-dev python-setuptools python-pip git gcc
 
 CentOS/RHEL/Fedora
 ^^^^^^^^^^^^^^^^^^
 
 ::
-
-    $ sudo yum update
 
     $ sudo yum install -y python-devel python-setuptools git gcc
 

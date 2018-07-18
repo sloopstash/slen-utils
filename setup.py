@@ -25,7 +25,7 @@ if __name__=='__main__':
   # setup configuration.
   setup(
     name='slen-utils',
-    version='1.1.1',
+    version='1.1.2',
     description='A bundle of utilities to manage SLEN resources.',
     long_description=open('README.rst').read(),
     author='SLEN DevOps',
