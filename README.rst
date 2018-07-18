@@ -13,9 +13,7 @@ Ubuntu/Debain
 
     $ sudo apt-get update
 
-    $ sudo apt-get install -y python-dev python-setuptools python-pip gcc
-
-    $ sudo pip install --upgrade pip
+    $ sudo apt-get install -y python-dev python-setuptools python-pip git gcc
 
 CentOS/RHEL/Fedora
 ^^^^^^^^^^^^^^^^^^
@@ -24,11 +22,9 @@ CentOS/RHEL/Fedora
 
     $ sudo yum update
 
-    $ sudo yum install -y python-devel python-setuptools gcc
+    $ sudo yum install -y python-devel python-setuptools git gcc
 
     $ sudo easy_install pip
-
-    $ sudo pip install --upgrade pip
 
 Installation
 ------------
