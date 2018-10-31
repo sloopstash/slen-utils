@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import (absolute_import,unicode_literals)
   
-# import community modules.
+# Import community modules.
 import os
 import sys
 import json
@@ -9,13 +9,14 @@ import requests
 from subprocess32 import call
 from termcolor import cprint
 
-# import custom modules.
+# Import custom modules.
 from slen.config import config
 
-# identity controller.
+
+# Identity controller.
 class identity(object):
 
-  # initializer.
+  # Initializer.
   def __init__(self,**kwargs):
     self.system = {}
     self.account = {}
@@ -26,7 +27,7 @@ class identity(object):
     self.user['api_key_identifier'] = config['user']['api_key_identifier']
     self.user['api_key_token'] = config['user']['api_key_token']
 
-  # setup base home directory.
+  # Setup base home directory.
   def setup_base_home_dir(self):
     try:
       call(['mkdir','-p',self.system['base_home_dir']])
@@ -34,7 +35,7 @@ class identity(object):
       cprint('Error setting-up system base home directory.','red')
       sys.exit(1)
 
-  # get identity.
+  # Get Identity.
   def get(self,params):
     params = json.loads(params)
     request = requests.get(
@@ -44,18 +45,18 @@ class identity(object):
     response = request.json()
     return {'request':request,'response':response}
 
-  # sync identity.
+  # Sync Identity.
   def sync(self,params):
     data = self.get(params)
     if data['request'].status_code==200 and data['response']['status']=='success' and data['response'].has_key('result'):
       identity_data = data['response']['result']['identity']
       if self.exists(identity_data) is True:
-        cprint('The identity already exists.','yellow')
+        cprint('Identity already exists.','yellow')
         identity_data['home_dir'] = self.system['base_home_dir']+'/'+identity_data['name']
         self.update_keys(identity_data)
         sys.exit(1)
       if self.is_active(identity_data) is False:
-        cprint('The identity is blocked.','yellow')
+        cprint('Identity is blocked.','yellow')
         self.remove(identity_data)
         sys.exit(1)
       self.setup_base_home_dir()
@@ -64,23 +65,37 @@ class identity(object):
       self.configure(identity_data)
       self.update_keys(identity_data)
     else:
-      cprint('Error syncing identity.','red')
+      cprint('Error syncing Identity.','red')
       sys.exit(1)
 
-  # delete identity.
+  # Rotate Identity keys.
+  def rotate_keys(self,params):
+    params = json.loads(params)
+    request = requests.get(
+      self.account['scheme']+'://'+self.account['full_domain']+'/API/Stack/'+str(params['stack_id'])+'/Identity/'+str(params['identity_id'])+'/RotateKeys',
+      headers={'Authorization':'SLEN '+self.user['api_key_identifier']+':'+self.user['api_key_token']}
+    )
+    response = request.json()
+    if request.status_code==200 or response['status']=='success':
+      cprint('Identity keys rotated.','green')
+    else:
+      cprint('Error rotating Identity keys.','red')
+      sys.exit(1)
+
+  # Delete Identity.
   def delete(self,params):
     data = self.get(params)
     if data['request'].status_code==200 and data['response']['status']=='success' and data['response'].has_key('result'):
       identity_data = data['response']['result']['identity']
       if self.exists(identity_data) is False:
-        cprint('The identity does not exists.','yellow')
+        cprint('Identity does not exist.','yellow')
         sys.exit(1)
       self.remove(identity_data)
     else:
-      cprint('Error deleting identity.','red')
+      cprint('Error deleting Identity.','red')
       sys.exit(1)
 
-  # check identity exists.
+  # Check Identity exists.
   def exists(self,data):
     id = call(['id',data['name']])
     if id==0:
@@ -88,27 +103,27 @@ class identity(object):
     else:
       return False
 
-  # check identity is active.
+  # Check Identity is active.
   def is_active(self,data):
     if data['status']==1:
       return True
     else:
       return False
 
-  # create identity.
+  # Create Identity.
   def create(self,data):
     try:
       add_user = call(['useradd','-m','-s','/bin/bash','-d',data['home_dir'],data['name']])
       if add_user!=0:
         raise
       call(['chmod','-R','o-rwx',data['home_dir']])
-      cprint('A new identity is created.','green')
+      cprint('Identity created.','green')
     except Exception as Error:
       self.remove(data)
-      cprint('Error creating identity.','red')
+      cprint('Error creating Identity.','red')
       sys.exit(1)
 
-  # configure identity.
+  # Configure Identity.
   def configure(self,data):
     try:
       def keys(data):
@@ -140,10 +155,10 @@ class identity(object):
       ownership(data)
     except Exception as Error:
       self.remove(data)
-      cprint('Error configuring identity.','red')
+      cprint('Error configuring Identity.','red')
       sys.exit(1)
 
-  # update keys for identity.
+  # Update Identity keys.
   def update_keys(self,data):
     try:
       authorized_keys = data['home_dir']+'/.ssh/authorized_keys'
@@ -156,20 +171,20 @@ class identity(object):
         private_key = open(id_rsa,'wt')
         private_key.write(data['private_key'])
         private_key.close()
-      cprint('The identity keys are updated.','green')
+      cprint('Identity keys updated.','green')
     except Exception as Error:
       self.remove(data)
-      cprint('Error updating identity keys.','red')
+      cprint('Error updating Identity keys.','red')
       sys.exit(1)
 
-  # remove identity.
+  # Remove Identity.
   def remove(self,data):
     try:
       delete_user = call(['userdel','-r',data['name']])
       if delete_user!=0:
         raise
     except Exception as Error:
-      cprint('Error deleting identity.','red')
+      cprint('Error deleting Identity.','red')
       sys.exit(1)
     else:
-      cprint('Deleted identity.','green')
+      cprint('Identity deleted.','green')

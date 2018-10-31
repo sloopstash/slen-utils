@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import (absolute_import,unicode_literals)
 
-# import community modules.
+# Import community modules.
 from ConfigParser import SafeConfigParser
 
 parser = SafeConfigParser()

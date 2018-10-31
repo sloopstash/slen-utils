@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from __future__ import (absolute_import,unicode_literals)
 
-# import community modules.
+# Import community modules.
 import os
 import sys
 import re
@@ -10,57 +10,58 @@ from jinja2 import Template
 from termcolor import cprint
 from fqdn import FQDN
 
-# validate path.
+
+# Validate path.
 def is_path_valid(path):
   if path:
     if os.path.isabs(path):
       return True
     else:
-      cprint('The path is invalid.','red')
+      cprint('Invalid path.','red')
   else:
-    cprint('The path should not be empty.','red')
+    cprint('Cannot accept empty path.','red')
 
-# validate full domain.
+# Validate full domain.
 def is_full_domain_valid(full_domain):
   if full_domain:
     fqdn = FQDN(full_domain)
     if fqdn.is_valid:
       return True
     else:
-      cprint('The full domain is invalid.','red')
+      cprint('Invalid full domain.','red')
   else:
-    cprint('The full domain should not be empty.','red')
+    cprint('Cannot accept empty full domain.','red')
 
-# validate scheme.
+# Validate scheme.
 def is_scheme_valid(scheme):
   if scheme:
     if scheme=='http' or scheme=='https':
       return True
     else:
-      cprint('The scheme is invalid.','red')
+      cprint('Invalid scheme.','red')
   else:
-    cprint('The scheme should not be empty.','red')
+    cprint('Cannot accept empty scheme.','red')
 
-# validate api key identifier.
+# Validate API key identifier.
 def is_api_key_identifier_valid(identifier):
   if identifier:
     return True
   else:
-    cprint('The api key identifier should not be empty.','red')
+    cprint('Cannot accept empty API key identifier.','red')
 
-# validate api key token.
+# Validate API key token.
 def is_api_key_token_valid(token):
   if token:
     return True
   else:
-    cprint('The api key token should not be empty.','red')
+    cprint('Cannot accept empty API key token.','red')
 
-# generate template.
+# Generate configuration template.
 def generate_config(**kwargs):
   if os.path.exists(kwargs['output']) is True:
     call(['chmod','600',kwargs['output']])
   else:
-    cprint('The config file does not exist.','red')
+    cprint('Configuration file does not exist.','red')
     sys.exit(1)
   kwargs['template'] = open(kwargs['template'],'r')
   data = kwargs['template'].read()
@@ -71,29 +72,30 @@ def generate_config(**kwargs):
   kwargs['output'].write(output)
   kwargs['output'].close()
 
+
 if __name__=='__main__':
 
-  # run only as sudo/root user.
+  # Run only as sudo/root user.
   if not os.geteuid()==0:
-    cprint('You should run this command as sudo/root user.','red')
+    cprint('Run this command as sudo/root user.','red')
     sys.exit(1)
 
   config_dir = '/etc/slen'
   vars = {}
   vars['system'] = {}
-  vars['system']['base_home_dir'] = str(raw_input('Enter system base home directory (ex: /opt/slen): '))
+  vars['system']['base_home_dir'] = str(raw_input('System base home directory (ex: /opt/slen): '))
   if is_path_valid(vars['system']['base_home_dir']) is not True: sys.exit(1)
 
   vars['account'] = {}
-  vars['account']['full_domain'] = str(raw_input('Enter account full domain (ex: sloopstash-prd.pod-2.sloopengine.io): '))
+  vars['account']['full_domain'] = str(raw_input('Account full domain (ex: sloopstash-prd.pod-2.sloopengine.io): '))
   if is_full_domain_valid(vars['account']['full_domain']) is not True: sys.exit(1)
-  vars['account']['scheme'] = str(raw_input('Enter account scheme (ex: https/http): '))
+  vars['account']['scheme'] = str(raw_input('Account scheme (ex: https/http): '))
   if is_scheme_valid(vars['account']['scheme']) is not True: sys.exit(1)
 
   vars['user'] = {}
-  vars['user']['api_key_identifier'] = str(raw_input('Enter user api key identifier: '))
+  vars['user']['api_key_identifier'] = str(raw_input('User API key identifier: '))
   if is_api_key_identifier_valid(vars['user']['api_key_identifier']) is not True: sys.exit(1)
-  vars['user']['api_key_token'] = str(raw_input('Enter user api key token: '))
+  vars['user']['api_key_token'] = str(raw_input('User API key token: '))
   if is_api_key_token_valid(vars['user']['api_key_token']) is not True: sys.exit(1)
 
   generate_config(

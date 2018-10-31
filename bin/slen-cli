@@ -1,36 +1,39 @@
 #!/usr/bin/python
 from __future__ import (absolute_import,unicode_literals)
 
-# import community modules.
+# Import community modules.
 import os
 import sys
 import argparse
 from termcolor import cprint
 
+
 if __name__=='__main__':
 
-  # run only as sudo/root user.
+  # Run only as sudo/root user.
   if not os.geteuid()==0:
-    cprint('You should run this command as sudo/root user.','red')
+    cprint('Run this command as sudo/root user.','red')
     sys.exit(1)
 
-  # import custom modules.
+  # Import custom modules.
   from slen.core.identity import identity
 
-  cli = argparse.ArgumentParser(description='A CLI utility to manage SLEN resources.')
+  cli = argparse.ArgumentParser(description='A command line utility to manage SloopEngine resources.')
   cli.add_argument('--resource',choices=['identity'],required=True)
-  cli.add_argument('--action',choices=['sync','delete'],required=True)
+  cli.add_argument('--action',choices=['sync','rotate-keys','delete'],required=True)
   cli.add_argument('--params')
 
   args = cli.parse_args()
   if args.resource=='identity':
     if args.action=='sync':
       identity().sync(args.params)
+    elif args.action=='rotate-keys':
+      identity().rotate_keys(args.params)
     elif args.action=='delete':
       identity().delete(args.params)
     else:
-      cprint('The action is invalid.','red')
+      cprint('Invalid action.','red')
       sys.exit(1)
   else:
-    cprint('The action is invalid.','red')
+    cprint('Invalid action.','red')
     sys.exit(1)

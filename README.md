@@ -1,5 +1,5 @@
 # SLEN Utils
-A bundle of utilities to manage SLEN resources.
+A command line utility to manage SloopEngine resources.
 
 
 ## System Requirements
@@ -20,12 +20,15 @@ A bundle of utilities to manage SLEN resources.
 
 
 ## Usage
-#### Sync Identity on Server
+#### Sync Identity
     $ sudo slen-cli --resource identity --action sync --params '{"stack_id":231,"identity_id":1892}'
+
+#### Rotate Identity keys
+    $ sudo slen-cli --resource identity --action rotate-keys --params '{"stack_id":231,"identity_id":1892}'
 
 #### Delete Identity
     $ sudo slen-cli --resource identity --action delete --params '{"stack_id":231,"identity_id":1892}'
-  
+
 
 ## Support
 > SLEN DevOps <devops@sloopengine.io>
