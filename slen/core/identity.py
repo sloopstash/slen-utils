@@ -55,10 +55,6 @@ class identity(object):
         identity_data['home_dir'] = self.system['base_home_dir']+'/'+identity_data['name']
         self.update_keys(identity_data)
         sys.exit(1)
-      if self.is_active(identity_data) is False:
-        cprint('Identity is blocked.','yellow')
-        self.remove(identity_data)
-        sys.exit(1)
       self.setup_base_home_dir()
       identity_data['home_dir'] = self.system['base_home_dir']+'/'+identity_data['name']
       self.create(identity_data)
@@ -99,13 +95,6 @@ class identity(object):
   def exists(self,data):
     id = call(['id',data['name']])
     if id==0:
-      return True
-    else:
-      return False
-
-  # Check Identity is active.
-  def is_active(self,data):
-    if data['status']==1:
       return True
     else:
       return False
