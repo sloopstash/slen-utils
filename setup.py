@@ -37,7 +37,7 @@ if __name__=='__main__':
     packages=find_packages(),
     zip_safe=True,
     scripts=['bin/slen-cli','bin/slen-config'],
-    install_requires=['subprocess32==3.2.7','requests==2.20.0','termcolor==1.1.0','jinja2==2.10','fqdn==1.1.0'],
+    install_requires=['subprocess32==3.2.7','requests==2.20.0','termcolor==1.1.0','jinja2==2.11.3','fqdn==1.1.0'],
     cmdclass={'install':_install},
     data_files=[('/etc/slen',['conf/main.ini','conf/main.ini.template'])],
     license='Apache License 2.0'
